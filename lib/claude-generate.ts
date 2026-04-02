@@ -203,12 +203,14 @@ Retourner UNIQUEMENT un tableau JSON valide. Aucun texte avant ou après. Aucun 
 export async function generateSectionsWithBlocks(courseText: string): Promise<GeneratedSection[]> {
   const client = makeClient()
 
-  const message = await client.messages.create({
-    model:      'claude-opus-4-5',
-    max_tokens: 32000,
+  // Utilise .stream() pour éviter le timeout SDK sur les longues générations
+  const stream  = await client.messages.stream({
+    model:      'claude-sonnet-4-5',
+    max_tokens: 16000,
     system:     SECTIONS_SYSTEM_PROMPT,
     messages:   [{ role: 'user', content: `Voici le cours à transformer en sections :\n\n${courseText}` }],
   })
+  const message    = await stream.finalMessage()
 
   const raw        = message.content[0].type === 'text' ? message.content[0].text : '[]'
   const stopReason = message.stop_reason
