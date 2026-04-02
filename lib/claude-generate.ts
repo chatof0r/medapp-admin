@@ -204,14 +204,37 @@ export async function generateSectionsWithBlocks(courseText: string): Promise<Ge
   const client = makeClient()
 
   const message = await client.messages.create({
-    model: 'claude-opus-4-5',
-    max_tokens: 16000,
-    system: SECTIONS_SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: `Voici le cours à transformer en sections :\n\n${courseText}` }],
+    model:      'claude-opus-4-5',
+    max_tokens: 32000,
+    system:     SECTIONS_SYSTEM_PROMPT,
+    messages:   [{ role: 'user', content: `Voici le cours à transformer en sections :\n\n${courseText}` }],
   })
 
-  const raw = message.content[0].type === 'text' ? message.content[0].text : '[]'
-  const sections = parseJSON<GeneratedSection[]>(raw)
-  if (!Array.isArray(sections)) throw new Error('La réponse de Claude n\'est pas un tableau JSON valide.')
+  const raw        = message.content[0].type === 'text' ? message.content[0].text : '[]'
+  const stopReason = message.stop_reason
+
+  // Réponse tronquée = JSON invalide garanti
+  if (stopReason === 'max_tokens') {
+    throw new Error(
+      'Le cours est trop long — Claude a été interrompu avant de terminer. ' +
+      'Coupe le texte en 2 parties et génère chaque partie séparément.'
+    )
+  }
+
+  let sections: GeneratedSection[]
+  try {
+    sections = parseJSON<GeneratedSection[]>(raw)
+  } catch {
+    console.error('[claude-generate] raw (500 chars):', raw.slice(0, 500))
+    throw new Error(
+      'La réponse de Claude n\'est pas du JSON valide. ' +
+      'Réessaie — si l\'erreur persiste, coupe le texte en parties plus courtes.'
+    )
+  }
+
+  if (!Array.isArray(sections)) {
+    throw new Error('Format inattendu : Claude n\'a pas retourné un tableau.')
+  }
+
   return sections
 }

@@ -381,18 +381,35 @@ export default function IAPage() {
 
         {/* Zone d'input selon le mode */}
         {inputMode === 'text' ? (
-          <textarea
-            value={pastedText}
-            onChange={e => setPastedText(e.target.value)}
-            placeholder="Colle ici le texte du cours du professeur..."
-            rows={8}
-            style={{
-              width: '100%', background: C.bg, color: C.textPrimary,
-              border: `0.5px solid ${C.borderStr}`, borderRadius: '8px',
-              padding: '10px 12px', fontSize: '13px', lineHeight: 1.6,
-              resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
-            }}
-          />
+          <div>
+            <textarea
+              value={pastedText}
+              onChange={e => { setPastedText(e.target.value); setError('') }}
+              placeholder="Colle ici le texte du cours du professeur..."
+              rows={8}
+              style={{
+                width: '100%', background: C.bg, color: C.textPrimary,
+                border: `0.5px solid ${pastedText.length > 40000 ? C.orange : C.borderStr}`,
+                borderRadius: '8px', padding: '10px 12px', fontSize: '13px', lineHeight: 1.6,
+                resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
+              }}
+            />
+            {/* Compteur + avertissement longueur */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
+              <span style={{ fontSize: '11px', color: pastedText.length > 40000 ? C.orange : C.textTert }}>
+                {pastedText.length > 0 && `${pastedText.length.toLocaleString()} caractères`}
+                {pastedText.length > 40000 && ' — texte long, envisage de le couper en 2 parties'}
+              </span>
+              {pastedText.length > 0 && (
+                <span
+                  onClick={() => setPastedText('')}
+                  style={{ fontSize: '11px', color: C.textTert, cursor: 'pointer' }}
+                >
+                  effacer
+                </span>
+              )}
+            </div>
+          </div>
         ) : (
           <div
             onClick={() => fileInputRef.current?.click()}
