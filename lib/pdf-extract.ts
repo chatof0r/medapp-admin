@@ -3,7 +3,9 @@
  * Extraction du texte brut depuis un buffer PDF côté serveur (Node.js uniquement).
  */
 
-import pdfParse from 'pdf-parse/node'
+// pdf-parse exporte en CJS — on utilise require pour éviter le problème d'export default ESM
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require('pdf-parse') as (buffer: Buffer) => Promise<{ text: string }>
 
 /** Taille maximale du texte envoyé à Claude (≈ 150 000 tokens). */
 const MAX_TEXT_LENGTH = 200_000
